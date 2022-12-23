@@ -1,0 +1,196 @@
+name: Visual Inspection
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'visual-inspection/**'
+      - '!visual-inspection/tests/**'
+      - '!visual-inspection/**.md'
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - uses: actions/cache@v3.0.8
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('./visual-inspection/inspection-backend/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          set -e
+          cd ./visual-inspection/inspection-backend
+          echo $PWD
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          set -e
+          cd ./visual-inspection/inspection-backend
+          echo $PWD
+          pip install flake8
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Download model
+        run: |
+          set -e
+          cd ./visual-inspection/inspection-backend
+          ./download_models.sh my_model
+
+      - name: Run unit tests with pytest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: inspection-backend-unit
+          COVERALLS_PARALLEL: ${{ github.ref == 'refs/heads/master' }}
+        run: |
+          set -e
+          cd ./visual-inspection/inspection-backend
+          echo $PWD
+          pip install -r requirements-test.txt
+          pytest -v --cov=inspection -m "not integration" tests/
+          # when on master, pretend to be on branch x-cov-inspection-backend
+          $COVERALLS_PARALLEL && export GITHUB_REF="refs/heads/x-cov-inspection-backend"
+          $COVERALLS_PARALLEL && export GITHUB_HEAD_REF="x-cov-inspection-backend"
+          coveralls --service=github --srcdir=visual-inspection/inspection-backend
+
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node 14
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - uses: actions/cache@v3.0.8
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('./visual-inspection/inspection-frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          set -e
+          cd ./visual-inspection/inspection-frontend/
+          echo $PWD
+          npm install
+
+      - name: Run tests
+        run: |
+          set -e
+          cd ./visual-inspection/inspection-frontend/
+          echo $PWD
+          npm run test:unit
+
+      - name: Report coverage
+        if: github.ref == 'refs/heads/master'
+        env:
+          COVERALLS_SERVICE_NAME: github
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: inspection-frontend-unit
+          COVERALLS_GIT_BRANCH: x-cov-inspection-frontend
+        run: |
+          set -e
+          cd ./visual-inspection/inspection-frontend/
+          echo $PWD
+          npm install coveralls
+          cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js
+
+
+  build:
+    runs-on: ubuntu-latest
+    needs:
+      - test-backend
+      - test-frontend
+    if: github.ref == 'refs/heads/master'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+
+    - uses: actions/cache@v3.0.8
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('./visual-inspection/inspection-backend/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        set -e
+        cd ./visual-inspection/inspection-backend
+        echo $PWD
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Download model
+      run: |
+        set -e
+        cd ./visual-inspection/inspection-backend
+        ./download_models.sh my_model
+
+    - name: Run integration tests with pytest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_FLAG_NAME: inspection-backend-int
+        COVERALLS_PARALLEL: true
+      run: |
+        set -e
+        cd ./visual-inspection/inspection-backend
+        echo $PWD
+        pip install -r requirements-test.txt
+        pytest -v --cov=inspection -m "integration" tests/
+        # when on master, pretend to be on branch x-cov-inspection-backend
+        $COVERALLS_PARALLEL && export GITHUB_REF="refs/heads/x-cov-inspection-backend"
+        $COVERALLS_PARALLEL && export GITHUB_HEAD_REF="x-cov-inspection-backend"
+        coveralls --service=github --srcdir=visual-inspection/inspection-backend
+        coveralls --service=github --finish
+
+    - name: Create visual-inspection container and publish to Registry
+      uses: elgohr/Publish-Docker-Github-Action@v4
+      env:
+        MODEL_IDS: my_model
+        FLAVOR: visual-inspection
+      with:
+        name: xai-demonstrator/visual-inspection-service
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        registry: ghcr.io
+        workdir: visual-inspection/
+        buildargs: MODEL_IDS,FLAVOR
+
+    - name: Create digital-education container and publish to Registry
+      uses: elgohr/Publish-Docker-Github-Action@v4
+      env:
+        MODEL_IDS: model_0_15T_15 model_0_15T_200 model_0_15_15 model_0_15_200 model_0_200T_15 model_0_200T_200 model_0_200_15 model_0_200_200 model_15T_15T_15 model_15T_15T_200 model_15T_15_15 model_15T_15_200 model_15T_200T_15 model_15T_200T_200 model_15T_200_15 model_15T_200_200 model_15_15T_15 model_15_15T_200 model_15_15_15 model_15_15_200 model_15_200T_15 model_15_200T_200 model_15_200_15 model_15_200_200 model_200T_15T_15 model_200T_15T_200 model_200T_15_15 model_200T_15_200 model_200T_200T_15 model_200T_200T_200 model_200T_200_15 model_200T_200_200 model_200_15T_15 model_200_15T_200 model_200_15_15 model_200_15_200 model_200_200T_15 model_200_200T_200 model_200_200_15 model_200_200_200
+        FLAVOR: digital-education
+      with:
+        name: xai-demonstrator/digital-education-service
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        registry: ghcr.io
+        workdir: visual-inspection/
+        buildargs: MODEL_IDS,FLAVOR

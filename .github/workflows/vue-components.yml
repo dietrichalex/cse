@@ -1,0 +1,78 @@
+name: Vue Components
+
+on:
+  push:
+    paths:
+      - 'common/vue-components/**'
+      - '!common/vue-components/*.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Node 14
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - uses: actions/cache@v3.0.8
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('./common/vue-components/xaidemo-ui/package-lock.json') }}
+          restore-keys: |
+           ${{ runner.os }}-node-
+
+      - name: Install dependecies
+        run: |
+          set -e
+          cd ./common/vue-components/xaidemo-ui
+          npm install
+
+      - name: Run tests
+        run: |
+          set -e
+          cd ./common/vue-components/xaidemo-ui
+          npm run test:unit
+
+      - name: Report coverage
+        if: ${{ github.ref == 'refs/heads/master' }}
+        env:
+          COVERALLS_SERVICE_NAME: github
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: vue-components-unit
+          COVERALLS_GIT_BRANCH: x-cov-vue-components
+        run: |
+          set -e
+          cd ./common/vue-components/xaidemo-ui
+          npm install coveralls
+          cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js
+
+      - name: Build xaidemo-ui library
+        run: |
+          set -e
+          cd ./common/vue-components/xaidemo-ui
+          npm run build:lib
+
+      - name: Publish xaidemo-ui package
+        if: ${{ github.actor != 'dependabot[bot]' }}
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: ./common/vue-components/xaidemo-ui/package.json
+          access: public
+          check-version: true
+          dry-run: ${{ github.ref != 'refs/heads/master' }}
+
+      - name: Slack Notification
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: rtCamp/action-slack-notify@v2.2.0
+        env:
+          SLACK_CHANNEL: xai-demonstrator-monitor
+          SLACK_MESSAGE: 'Released a new version of @xai-demonstrator/xaidemo-ui :bricks: at https://www.npmjs.com/package/@xai-demonstrator/xaidemo-ui'
+          SLACK_TITLE: New xaidemo-ui Release
+          SLACK_USERNAME: Deployment Monitor
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          MSG_MINIMAL: true

@@ -1,0 +1,64 @@
+{
+  "name": "country-frontend",
+  "version": "0.1.0",
+  "description": "A Vue.js project",
+  "author": "The XAI Demonstrator team",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "test:unit": "vue-cli-service test:unit --collect-coverage",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@xai-demonstrator/xaidemo-ui": "^0.4.6",
+    "core-js": "^3.25.0",
+    "notiwind": "^1.2.6",
+    "vue": "^3.2.38"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^4.5.19",
+    "@vue/cli-plugin-eslint": "^4.5.19",
+    "@vue/cli-plugin-unit-jest": "^4.5.19",
+    "@vue/cli-service": "^4.5.19",
+    "@vue/compiler-sfc": "^3.2.37",
+    "@vue/test-utils": "^2.0.2",
+    "axios": "^0.27.2",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-vue": "^7.20.0",
+    "flush-promises": "^1.0.2",
+    "miragejs": "^0.1.45",
+    "vue-jest": "^5.0.0-alpha.10"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
+    },
+    "rules": {},
+    "overrides": [
+      {
+        "files": [
+          "**/__tests__/*.{j,t}s?(x)",
+          "**/tests/unit/**/*.spec.{j,t}s?(x)"
+        ],
+        "env": {
+          "jest": true
+        }
+      }
+    ]
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

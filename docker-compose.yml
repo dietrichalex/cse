@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  landing:
+    build:
+      context: .
+      dockerfile: ./landing-page/Dockerfile
+    depends_on:
+      - inspection
+      - sentiment
+      - country
+    ports:
+      - 8000:80
+
+  sentiment:
+    build: ./review-sentiment/
+
+  inspection:
+    build: ./visual-inspection/
+
+  country:
+    build: ./guess-the-country/
+

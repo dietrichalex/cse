@@ -1,0 +1,90 @@
+name: Clean Up
+on:
+  schedule:
+    - cron: "15 14 */7 * *"
+  workflow_dispatch:
+
+jobs:
+  ghcr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node 14
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: |
+          set -e
+          cd ./.github/maintenance
+          npm install
+
+      - name: Remove old, untagged images from GHCR
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          cd ./.github/maintenance
+          node clean-ghcr.js xai-demonstrator landing-page-service 3
+          node clean-ghcr.js xai-demonstrator review-sentiment-service 3
+          node clean-ghcr.js xai-demonstrator visual-inspection-service 3
+
+  gcp-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0.6.0
+      with:
+        project_id: ${{ secrets.GCP_TEST_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_TEST_SA_KEY }}
+
+    - name: Remove old images
+      run: |
+        cd ./deployment/prod-deployment/
+        chmod +x clean_gcr.sh
+        ./clean_gcr.sh ${{ secrets.GCP_TEST_PROJECT_ID }} review-sentiment 3
+        ./clean_gcr.sh ${{ secrets.GCP_TEST_PROJECT_ID }} visual-inspection 3
+
+
+  gcp-prod:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0.6.0
+      with:
+        project_id: ${{ secrets.GCP_PROD_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_PROD_SA_KEY }}
+
+    - name: Remove old images
+      run: |
+        cd ./deployment/prod-deployment/
+        chmod +x clean_gcr.sh
+        ./clean_gcr.sh ${{ secrets.GCP_PROD_PROJECT_ID }} review-sentiment 3
+        ./clean_gcr.sh ${{ secrets.GCP_PROD_PROJECT_ID }} visual-inspection 3
+
+
+  bwcloud-test:
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+      url: https://test.xaidemo.de
+    steps:
+      - name: Remove stale Docker images
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            sudo docker image prune -a --force --filter "until=48h"
+            

@@ -1,0 +1,6 @@
+.coverage
+htmlcov/
+
+country/model/*.model
+country/model/my_model
+country/static/

@@ -1,0 +1,140 @@
+name: Prod Deployment
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  build-frontends:
+    strategy:
+      matrix:
+        include:
+          - service: sentiment
+            repo_path: ./review-sentiment/sentiment-frontend
+          - service: inspection
+            repo_path: ./visual-inspection/inspection-frontend
+          - service: landing-page
+            repo_path: ./landing-page/frontend
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set Up Node Environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - uses: actions/cache@v3.0.8
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('${{ matrix.repo_path }}/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Build Frontend
+        run: |
+          set -e
+          cd ${{ matrix.repo_path }}
+          npm install
+          npm run build -- --mode prod-deployment
+          mv dist ${{ matrix.service }}
+
+      - name: Save build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.service }}
+          path: ${{ matrix.repo_path }}/${{ matrix.service }}
+          retention-days: 3
+
+  deploy-frontends:
+    needs: build-frontends
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download all frontends
+        uses: actions/download-artifact@v3
+        with:
+          path: ./deployment/prod-deployment/frontends/public
+
+      - name: Deploy to Firebase
+        uses: w9jds/firebase-action@v11.5.0
+        with:
+          args: deploy --only hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.GCP_PROD_FIREBASE_TOKEN }}
+          PROJECT_PATH: ./deployment/prod-deployment/frontends
+
+
+  deploy-backends:
+    strategy:
+      matrix:
+        include:
+          - service: review-sentiment
+            prefix: sentiment
+            memory: 8Gi
+            cpu: 4
+            concurrent: 6
+          - service: visual-inspection
+            prefix: inspection
+            memory: 2Gi
+            cpu: 2
+            concurrent: 12
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.6.0
+        with:
+          project_id: ${{ secrets.GCP_PROD_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_PROD_SA_KEY }}
+          export_default_credentials: true  # Set to true to authenticate the Cloud Run action
+
+      - name: Authorize Docker
+        run: gcloud auth configure-docker
+
+      - name: Pull, Tag, and Push Container
+        run: |-
+          docker pull ghcr.io/xai-demonstrator/${{ matrix.service }}-service:latest
+          docker tag ghcr.io/xai-demonstrator/${{ matrix.service }}-service gcr.io/${{ secrets.GCP_PROD_PROJECT_ID }}/${{ matrix.service }}:${{ github.sha }}
+          docker push gcr.io/${{ secrets.GCP_PROD_PROJECT_ID }}/${{ matrix.service }}:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        run: |-
+            gcloud run deploy ${{ matrix.service }} \
+              --region ${{ secrets.GCP_PROD_REGION }} \
+              --image gcr.io/${{ secrets.GCP_PROD_PROJECT_ID }}/${{ matrix.service }}:${{ github.sha }} \
+              --platform managed \
+              --allow-unauthenticated \
+              --port 8000 \
+              --cpu "${{ matrix.cpu }}" \
+              --memory "${{ matrix.memory }}" \
+              --max-instances 25 \
+              --concurrency "${{ matrix.concurrent }}" \
+              --update-env-vars "PATH_PREFIX=/api/${{ matrix.prefix }}" \
+              --update-env-vars "TRACING_EXPORTER=gcp" \
+              --update-env-vars "SERVICE_NAME=${{ matrix.service }}"
+
+      - name: Show Output
+        run: echo ${{ steps.deploy.outputs.url }}
+
+
+  notify:
+    needs:
+      - deploy-frontends
+      - deploy-backends
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2.2.0
+        env:
+          SLACK_CHANNEL: xai-demonstrator-monitor
+          SLACK_MESSAGE: 'Successfully deployed a new release to https://www.xaidemo.de/ :rocket:'
+          SLACK_TITLE: New Prod Deployment
+          SLACK_USERNAME: Deployment Monitor
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          MSG_MINIMAL: true 

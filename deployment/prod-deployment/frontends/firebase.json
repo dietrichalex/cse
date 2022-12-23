@@ -1,0 +1,31 @@
+{
+  "hosting": {
+    "public": "public",
+    "rewrites": [
+      {
+        "source": "/api/sentiment/**",
+        "run": {
+          "serviceId": "review-sentiment",
+          "region": "europe-west3"
+        }
+      },
+      {
+        "source": "/api/inspection/**",
+        "run": {
+          "serviceId": "visual-inspection",
+          "region": "europe-west3"
+        }
+      },
+      {
+        "source": "/**",
+        "destination": "/landing-page/index.html"
+      }
+    ],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "trailingSlashes": true
+  }
+}
