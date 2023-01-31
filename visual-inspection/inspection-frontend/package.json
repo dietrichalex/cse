@@ -12,7 +12,7 @@
     "@xai-demonstrator/xaidemo-ui": "^0.4.6",
     "axios": "^0.27.2",
     "classnames": "^2.3.1",
-    "core-js": "^3.22.7",
+    "core-js": "^3.27.2",
     "debounce": "^1.2.1",
     "easy-bem": "^1.1.1",
     "flat": "^5.0.2",
