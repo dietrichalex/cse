@@ -9,6 +9,7 @@ services:
       - inspection
       - sentiment
       - country
+      - sales
     ports:
       - 8000:80
 
@@ -20,4 +21,7 @@ services:
 
   country:
     build: ./guess-the-country/
+    
+  sales:
+    build: ./sales-prediction/
 
