@@ -1,0 +1,3 @@
+,Anchors,Precisions,Classes,Predicted Sales,Dates
+0,"['Promo2SinceWeek <= 0.00', '3.00 < DayOfWeek <= 4.00', 'Assortment <= 1.00', '0.00 < CompetitionOpenSinceYear <= 2010.00', '8.00 < Month <= 10.00', '870.00 < CompetitionDistance <= 1700.00', '6.00 < CompetitionOpenSinceMonth <= 9.00', '0.00 < Promo <= 1.00']",0.5404884318766067,3.0,5526.0986,2015-09-17
+1,"['Promo2SinceWeek <= 0.00', '2.00 < DayOfWeek <= 3.00', '8.00 < Month <= 10.00', '870.00 < CompetitionDistance <= 1700.00', 'Assortment <= 1.00', 'PromoOpen > 24178.00', '2005.00 < CompetitionOpenSinceYear <= 2010.00', '6.00 < CompetitionOpenSinceMonth <= 9.00', 'Promo2SinceYear <= 2013.00', 'Promo <= 1.00']",0.4764930114358323,3.0,5338.003,2015-09-16
