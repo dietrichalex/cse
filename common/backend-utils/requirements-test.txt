@@ -1,7 +1,0 @@
-pytest
-pytest-asyncio
-pytest-cov
-pytest-env
-pytest-mock
-coveralls
-aioresponses==0.7.3
