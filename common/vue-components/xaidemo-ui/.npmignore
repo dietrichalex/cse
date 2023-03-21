@@ -1,8 +1,0 @@
-src/
-public/
-dist/
-coverage/
-tests/
-jest*.js
-babel*.js
-

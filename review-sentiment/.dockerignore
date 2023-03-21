@@ -1,8 +1,0 @@
-**/.pytest_cache
-**/.gitignore
-**/__pycache__
-**/node_modules
-**/dist
-**/.coverage
-
-sentiment-backend/sentiment/static

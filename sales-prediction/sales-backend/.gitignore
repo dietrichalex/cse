@@ -1,5 +1,0 @@
-.coverage
-htmlcov/
-
-sentiment/static
-sentiment/model/cache
