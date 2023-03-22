@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration file="C:\Users\Christian Karg\Documents\GitHub\cse\XAIDemonstrator.prj" location="C:\Users\Christian Karg\Documents\GitHub\cse" name="XAIDemonstrator" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="3461780254" file="C:\Users\Christian Karg\Documents\GitHub\cse\XAIDemonstrator.prj" location="C:\Users\Christian Karg\Documents\GitHub\cse" name="XAIDemonstrator" preferred-package-location="C:\Users\Christian Karg\Documents\GitHub\cse\XAIDemonstrator\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>XAIDemonstrator</param.appname>
     <param.icon>${PROJECT_ROOT}\XAIDemonstrator_resources\icon.ico</param.icon>
     <param.icons>
@@ -10,11 +10,11 @@
     </param.icons>
     <param.version>1.0</param.version>
     <param.authnamewatermark>Christian Karg</param.authnamewatermark>
-    <param.email />
+    <param.email>christian.karg@uni-ulm.de</param.email>
     <param.company />
     <param.summary />
-    <param.description />
-    <param.screenshot>${PROJECT_ROOT}\Images\UniUlm.png</param.screenshot>
+    <param.description>V1.1</param.description>
+    <param.screenshot>${PROJECT_ROOT}\Images\Logo_uniulm.jpg</param.screenshot>
     <param.guid />
     <param.installpath.string>\XAIDemonstrator\</param.installpath.string>
     <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
@@ -46,13 +46,13 @@
 	 XAI src event strs prec pred 
  Input Arguments 
 	 -?  print help on how to use the application 
-	 src event strs prec pred  input arguments</param.help.text>
+	 src event strs prec pred  input arguments 
+ Description 
+ 	 V1.1</param.help.text>
     <unset>
       <param.version />
-      <param.email />
       <param.company />
       <param.summary />
-      <param.description />
       <param.guid />
       <param.installpath.string />
       <param.installpath.combo />
@@ -82,17 +82,12 @@
     <fileset.main>
       <file>${PROJECT_ROOT}\XAI.m</file>
     </fileset.main>
-    <fileset.resources />
-    <fileset.package>
+    <fileset.resources>
       <file>${PROJECT_ROOT}\explanations</file>
-      <file>${PROJECT_ROOT}\explanations\explanations_Store1.csv</file>
-      <file>${PROJECT_ROOT}\explanations\explanations_Store2.csv</file>
-      <file>${PROJECT_ROOT}\explanations\explanations_Store3.csv</file>
-      <file>${PROJECT_ROOT}\explanations\explanations_Store4.csv</file>
       <file>${PROJECT_ROOT}\Images</file>
-      <file>${PROJECT_ROOT}\Images\UniUlm.png</file>
-      <file>${PROJECT_ROOT}\input\train.csv</file>
-    </fileset.package>
+      <file>${PROJECT_ROOT}\input</file>
+    </fileset.resources>
+    <fileset.package />
     <fileset.depfun />
     <build-deliverables>
       <file location="${PROJECT_ROOT}\XAIDemonstrator\for_testing" name="splash.png" optional="false">C:\Users\Christian Karg\Documents\GitHub\cse\XAIDemonstrator\for_testing\splash.png</file>

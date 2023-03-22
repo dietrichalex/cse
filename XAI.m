@@ -17,6 +17,7 @@ delete(fig);
 h.GUI.fig = figure('tag', 'XAI', 'resize', 'off', 'NumberTitle', 'off',...
     'Name', 'XAI', 'Position', figPosition, 'ToolBar', 'None', 'MenuBar', 'None');
 
+% Logos
 try
     frame_h = get(h.GUI.fig, 'javaframe');
     frame_h.setFigureIcon(javax.swing.ImageIcon('Images/UniUlm.png'));
@@ -37,6 +38,18 @@ try
 catch 
 end
 %% creating GUI
+% some general guidelines
+FS_H = 13;
+FS_SH = 11;
+FS_N = 10;
+height = 0.025;
+% colors
+CT = [0 0.45 0.7];
+CP = [0.8 0.4 0];
+CM = [0 0 0];
+% size Marker
+SM = 60;
+
 % title
 uicontrol(h.GUI.fig, 'style', 'text', 'String', 'Rossmann Store Sales Forecasting with XAI',...
     'units', 'normalized', 'Position', [0.11 0.9 0.5, 0.05], 'HorizontalAlignment', 'left',...
@@ -58,27 +71,22 @@ index = find(h.data{2,1}.Date == X_DataP(end));
 X_DataT = table2array(h.data{2,1}(index:end, 1));
 Y_DataT = table2array(h.data{2,1}(index:end, 2));
 % plot data
-plot(h.GUI.Plot, X_DataT, Y_DataT, 'b');
+plot(h.GUI.Plot, X_DataT, Y_DataT, 'Color', CT);
 hold on
-plot(h.GUI.Plot, X_DataP, Y_DataP, 'r');
+plot(h.GUI.Plot, X_DataP, Y_DataP, 'Color', CP);
 h.GUI.Plot.XLim   = [X_DataP(1)-calmonths(8) X_DataP(1)];
 
 % Ereignis-Handler für jeden Punkt hinzufügen
 for i = 1:length(X_DataP)
-    h.GUI.Scatter(i) = scatter(h.GUI.Plot, X_DataP(i), Y_DataP(i), 5, 'filled', 'r');
+    h.GUI.Scatter(i) = scatter(h.GUI.Plot, X_DataP(i), Y_DataP(i), 5, 'filled', 'CData', CP);
     set(h.GUI.Scatter(i), 'ButtonDownFcn', {@pointClickCallback, Z_DataP{i}, h.data{1, 1}.Precisions(i), h.data{1, 1}.PredictedSales(i)});
 end
 legend('Trained Sales Data', 'Predicted Sales Data');
+h.GUI.Plot.Legend.FontSize = 11;
 % By default the first predicted point is selected
-h.GUI.Scatter(end).CData = [0 1 0];
-h.GUI.Scatter(end).SizeData = 40;
+h.GUI.Scatter(end).CData = CM;
+h.GUI.Scatter(end).SizeData = SM;
 h.Marked = h.GUI.Scatter(end).SeriesIndex;
-% some general guidelines
-FS_H = 13;
-FS_SH = 11;
-FS_N = 10;
-height = 0.025;
-
 %% Explanation for default point
 % exact date
 h.GUI.Date = uicontrol(h.GUI.fig, 'style', 'text', 'String', datestr(X_DataP(end)),...
@@ -153,17 +161,23 @@ h.StoreIdx = 1;
 guidata(h.GUI.fig, h);
 %% Funktion for XAI
 function pointClickCallback(src, event, strs, prec, pred)
+    % colors
+    CP = [0.8 0.4 0];
+    CM = [0 0 0];
+    % size Marker
+    SM = 60;
+    
     % get data
     h = guidata(src);
     % undo old Marker
-    h.GUI.Scatter(h.Marked-2).CData = [1 0 0];
+    h.GUI.Scatter(h.Marked-2).CData = CP;
     h.GUI.Scatter(h.Marked-2).SizeData = 5;
     % get the recent point
     x = get(src, 'XData');
     y = get(src, 'YData');
     % new Marker
-    src.SizeData = 40;
-    src.CData = [0 1 0];
+    src.SizeData = SM;
+    src.CData = CM;
     h.Marked = src.SeriesIndex;
     
     % new Prediction
@@ -193,6 +207,13 @@ end
 function callbackChangeStore(src,event)
      % get data
     h = guidata(src);
+    
+    % colors
+    CT = [0 0.45 0.7];
+    CP = [0.8 0.4 0];
+    CM = [0 0 0];
+    % size Marker
+    SM = 60;
     % new data
     %% General Informations about the Store
     % Specific Store and All Stores
@@ -220,26 +241,26 @@ function callbackChangeStore(src,event)
     X_DataT = table2array(h.data{2,idx}(index:end, 1));
     Y_DataT = table2array(h.data{2,idx}(index:end, 2));
     % plot data
-    plot(h.GUI.Plot, X_DataT, Y_DataT, 'b');
+    plot(h.GUI.Plot, X_DataT, Y_DataT, 'Color', CT);
     hold on
-    plot(h.GUI.Plot, X_DataP, Y_DataP, 'r');
+    plot(h.GUI.Plot, X_DataP, Y_DataP, 'Color', CP);
     h.GUI.Plot.XLim   = [X_DataP(1)-calmonths(8) X_DataP(1)];
 
     % Ereignis-Handler für jeden Punkt hinzufügen
     for i = 1:length(X_DataP)
-        h.GUI.Scatter(i) = scatter(h.GUI.Plot, X_DataP(i), Y_DataP(i), 5, 'filled', 'r');
+        h.GUI.Scatter(i) = scatter(h.GUI.Plot, X_DataP(i), Y_DataP(i), 5, 'filled', 'CData', CP);
         set(h.GUI.Scatter(i), 'ButtonDownFcn', {@pointClickCallback, Z_DataP{i}, h.data{1, idx}.Precisions(i), h.data{1, idx}.PredictedSales(i)});
     end
     legend('Trained Sales Data', 'Predicted Sales Data');
     % By default the first predicted point is selected
     try
-        h.GUI.Scatter(h.Marked-2).CData = [1 0 0];
+        h.GUI.Scatter(h.Marked-2).CData = CP;
         h.GUI.Scatter(h.Marked-2).SizeData = 5;
     catch
     end
     
-    h.GUI.Scatter(i).CData = [0 1 0];
-    h.GUI.Scatter(i).SizeData = 40;
+    h.GUI.Scatter(i).CData = CM;
+    h.GUI.Scatter(i).SizeData = SM;
     h.Marked = h.GUI.Scatter(i).SeriesIndex;
     
     %% Explanation
